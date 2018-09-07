@@ -1,0 +1,170 @@
+all:
+  vars:
+    connection: network_cli
+    become: yes
+    become_method: enable
+  children:
+    ios:
+      hosts:
+        Lab_S3750A:
+          ansible_host: 136.171.179.24
+        Lab_S3750B:
+          ansible_host: 136.171.179.25
+      vars:
+        ansible_connection: network_cli
+        ansible_network_os: ios
+        iospathprefix: http://139.65.137.132/custom/ios/
+         # iospathprefix: tftp://139.65.137.132/
+        model_families:
+          ios:
+            CISCO1941W-A/K9: c1900
+            CISCO2911/K9: c2900
+            WS-C3560X-48U: c3500
+            WS-C3560X-24U: c3500
+            WS-C3560CPD-8PT-S: c3500A
+            WS-C3650-48PS: c3600
+            WS-C3650-24PS: c3600
+            WS-C3750X-24P: c3700
+            WS-C3750X-48P: c3700
+            WS-C3850-48P: c3800
+            WS-C3850-24P: c3800
+            CISCO3925-CHASSIS: c3900
+            WS-C6503-E: c6500
+            VG224: cVG224
+            WS-C4507R+E: c4500
+            VG350/K9: VG350
+        targetversion:
+          ios:
+            c1900:
+              boot_method: router
+              is_vg: false
+              config_register: "0x2102"
+              version: 15.1(2)T1
+              img: c1900-universalk9-mz.SPA.151-2.T1.bin
+              size: 48481860
+              checksum: fb94eb2eec2ecbf93754a68314fc817c
+              # access the item on the next line using: targetversion[ansible_network_os][model_families[device_model]].boot_method
+              # version: 15.1(1)T1
+              # img: c1900-universalk9_npe-mz.SPA.151-1.T1.bin
+              # size: 44989972
+              # checksum: 4a7deff07f0fee764c955e85b65dfe6a
+            c2900:
+              boot_method: router
+              is_vg: false
+              config_register: "0x2102"
+              version: 15.1(4)M5
+              img: c2900-universalk9-mz.SPA.151-4.M5.bin
+              size: 74555000
+              checksum: a8e30775860d572e3883795eb8bd82f7
+              # version: 15.5(3)M6a
+              # img: c2900-universalk9-mz.SPA.155-3.M6a.bin
+              # size: 109039004
+              # checksum: 4ff2675ac1f1c12d8ad7637fd5348238
+            c3500:
+              boot_method: router
+              is_vg: false
+              config_register: "0x2102"
+              version: 15.2(4)E5
+              img: c3560e-universalk9-mz.152-4.E5.bin
+              size: 25891840
+              checksum: 94df16079e0f5ffcf949408e55d6f2c7
+            c3500A:
+              boot_method: router
+              is_vg: false
+              config_register: "0x2102"
+              version: 15.0(2)SE11
+              img: c3560c405ex-universalk9-mz.150-2.SE11.bin
+              size: 20196864
+              checksum: de4927f68294035f749b908e74c84e34
+            c3600:
+              boot_method: switch
+              is_vg: false
+              config_register: "0x2102"
+              version: 16.3.5b
+              img: cat3k_caa-universalk9.16.03.05b.SPA.bin
+              size: 539622403
+              checksum: 756d17623b50adacf06d17f943e9dced
+            c3700:
+              boot_method: switch
+              is_vg: false
+              config_register: ""
+              version: 15.2(4)E6
+              img: c3750e-universalk9-mz.152-4.E6.bin
+              size: 25906176
+              checksum: b4c77931da557bd916c7d04091dca4a8
+              # version: 15.2(4)E5
+              # img: c3750e-universalk9-mz.152-4.E5.bin
+              # size: 25891840
+              # checksum: 8b8b82ad451dbcbbfd2f012bb4b46ca7
+            c3800:
+              boot_method: switch
+              is_vg: false
+              config_register: "0x2102"
+              # version: 16.3.5b
+              # img: cat3k_caa-universalk9.16.03.05b.SPA.bin
+              # size: 539622403
+              # checksum: 756d17623b50adacf06d17f943e9dced
+              version: 16.6.3
+              img: cat3k_caa-universalk9.16.06.03.SPA.bin
+              size: 410434678
+              checksum: 16fdc2dd9b8a5f7096a71e04ead0431d
+            c3900:
+              boot_method: router
+              is_vg: true
+              config_register: "0x2102"
+              version: 15.2(4)M7
+              img: c3900e-universalk9-mz.SPA.152-4.M7.bin
+              size: 91729612
+              checksum: e3c68b498b00cf23d4a53f84f65a7763
+              # version: 15.3(3)M3
+              # img: c3900e-universalk9-mz.SPA.153-3.M3.bin
+              # size: 96910452
+              # checksum: a71148d5ef840e0650cf523b4c7ef728
+            c6500:
+              boot_method: router
+              is_vg: false
+              config_register: "0x2102"
+              version: 15.1(1)SY1
+              img: s72033-advipservicesk9-mz.151-1.SY1.bin
+              size: 105659948
+              checksum: 1dac5997d0845714d3f1ab6128c541d6
+            cVG224:
+              boot_method: router
+              is_vg: true
+              config_register: "0x2102"
+              version: 12.4(15)T4
+              img: vg224-i6k9s-mz.124-15.T4.bin
+              size: 20420652
+              checksum: 67b187c964b5f15eb058ed038d8b22e3
+              # version: 15.1(3)T4
+              # img: vg224-i6k9s-mz.151-3.T4.bin
+              # size: 28288376
+              # checksum: ce743d6d2d6b94e3073ff062658b88c4
+              # version: 15.1(4)M12a
+              # img: vg224-i6k9s-mz.151-4.M12a.bin
+              # size: 28951396
+              # checksum: 9550c90a7f08a9c6aa29c62643e5baab
+              # version: 12.4(19)a
+              # img: vg224-i6k9s-mz.124-19a.bin
+              # size: 16631920
+              # checksum: 349d7f9d9d87c237e6b678c0a8a942f2
+            c4500:
+              boot_method: router
+              is_vg: false
+              config_register: "0x2102"
+              version: 03.08.04.E
+              img: cat4500e-universalk9.SPA.03.08.04.E.152-4.E4.bin
+              size: 190469012
+              checksum: df2a2d58818a9cdac3970a76e90b3b36
+            cVG350:
+              boot_method: router
+              is_vg: false
+              config_register: "0x2102"
+              # version: 15.4(3)M3
+              # img: vg350-universalk9-mz.SPA.154-3.M3.bin
+              # size: 52588540
+              # checksum: e785ec70777182b679ddd412ee75fa6e
+              version: 15.7(3)M2
+              img: vg350-universalk9-mz.SPA.157-3.M2.bin
+              size: 56697216
+              checksum: b553096ca15dcfb89873e7a2fe59b55f
