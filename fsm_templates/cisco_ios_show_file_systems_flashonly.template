@@ -1,0 +1,14 @@
+Value SIZE (\d+)
+Value FREE (\d+)
+Value TYPE (\S+)
+Value FLAGS (\S+)
+Value PREFIXES (flash\d*\:)
+
+Start
+  ^File Systems: -> SFS
+
+SFS
+  ^File Systems: -> SFS
+  ^\s*\*?\s+${SIZE}\s+${FREE}\s+${TYPE}\s+${FLAGS}\s+${PREFIXES} -> Record
+
+EOF

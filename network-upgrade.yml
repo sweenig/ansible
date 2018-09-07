@@ -1,0 +1,81 @@
+- hosts: all
+  gather_facts: no
+  connection: network_cli
+  tasks:
+    - import_role: name=show
+      tags:
+        - show
+        - stagefile
+
+    - name: Check if on target version
+      assert:
+        that: model_vars.version == device_version
+        msg: "{{ hostname }} ({{ device_model }}) -- {{ device_version }} ==> {{ model_vars.version }}"
+      ignore_errors: yes
+
+    - block:
+      - name: Device not on target version. Starting upgrade.
+        import_role: name=exectimeout
+        tags: exectimeout
+
+      - name: Stage file on non-stacked device
+        include_role: name=stagefile
+        vars:
+          volume: "flash:"
+          current_host: "{{ hostname }}"
+        tags: stagefile
+        when: membercount | int == 1
+
+      - name: Stage file on stacked device
+        include_role: name=stagefile
+        vars:
+          volume: "{{ item.PREFIXES }}"
+          current_host: "{{ hostname }}"
+        with_items: "{{ file_systems }}"
+        tags: stagefile
+        when: membercount | int > 1
+
+      - import_role: name=upgradeios
+        tags: upgradeios
+
+      - name: Wait for the device to come back online
+        wait_for:
+          host: "{{ ansible_host }}"
+          port: 22
+          delay: 15
+          timeout: 3600
+        tags: upgradeios
+
+      - name: Wait 20s for device to settle
+        wait_for: timeout=20
+        tags: upgradeios
+
+      when: device_version != model_vars.version
+      tags:
+        - block
+        - stagefile
+
+    - name: Reset Ansible persistent connection
+      meta: reset_connection
+
+    # - import_role: name=show
+      # tags: bundle2install
+
+    # - name: "Convert bundle mode to install mode (Multimode supported {{ install_supported }} Current mode {{ mode }})"
+      # import_role: name=bundle2install
+      # when: (install_supported) and (mode == 'BUNDLE')
+      # tags: bundle2install
+
+    # - name: Reset Ansible persistent connection
+      # meta: reset_connection
+      # tags: bundle2install
+
+    - import_role: name=show
+      tags:
+        - show
+        - upgradeios
+
+    - name: Verify that device is on the target version
+      debug: 
+        msg: "{{ device_model }} -- from version {{ device_version }} to version ==> {{ model_vars.version }}"
+      failed_when: "model_vars.version != device_version"

@@ -1,0 +1,23 @@
+- name: "{{ volume }} Query device for information"
+  ios_command:
+    commands:
+      - "dir {{ volume }}/*.pkg"
+  register: dir_data_raw
+
+- name: "{{ volume }} Apply structure to raw data"
+  set_fact:
+    dir_data: "{{ dir_data_raw.stdout[0] | parse_cli_textfsm('fsm_templates/cisco_ios_dir.template') }}"
+
+- name: "{{ volume }} Extract file list from structured data"
+  set_fact:
+    volume_file_list: "{{ dir_data | map(attribute='NAME') | list }}"
+
+- name: Count pkg files
+  set_fact:
+    pkg_count: "{{ volume_file_list | length }}"
+
+- name: "{{ volume }} Delete pkg files"
+  ios_command:
+    commands:
+      - delete /force *.pkg
+  when: pkg_count > 0

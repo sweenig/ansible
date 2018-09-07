@@ -1,0 +1,46 @@
+- name: Delete all pkg files
+  include_role: name=cleanflashes
+  vars:
+    volume: "{{ item.PREFIXES }}"
+  with_items: "{{ file_systems }}"
+  tags: cleanflashes
+
+- name: Clean file system of unused files
+  ios_command:
+    commands:
+      - command: "request platform software package clean switch all file flash:"
+        prompt: proceed
+        answer: y
+  register: clean_output
+  tags: clean
+
+- name: Assert that the clean was successful
+  debug:
+    msg: "{{ clean_output.stdout_lines[0] }}"
+  failed_when: "clean_output.stdout_lines[0][-1][:7] != 'SUCCESS'"
+  tags: clean
+
+- name: Extract running IOS to flash
+  ios_command:
+    commands:
+      - command: "request platform software package expand switch all file flash:/{{ system_image }} retain-source-file auto-copy force overwrite"
+  register: expand_output
+  tags: expand
+
+- name: Validate extraction results
+  debug: 
+    msg: 
+      - "Using image {{ system_image }}"
+      - "{{ expand_output.stdout_lines[0] }}"
+  failed_when: "expand_output.stdout_lines[0][-1][:7] != 'SUCCESS'"
+  tags: expand
+
+- name: Activate packages.conf
+  ios_config:
+    lines:
+      - no boot system switch all
+      - "boot system switch all flash:/packages.conf"
+  tags: activate
+      
+- name: Save and Reboot
+  import_role: name=save_reboot_verify

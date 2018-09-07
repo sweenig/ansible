@@ -1,0 +1,14 @@
+Value PORT (\S+)
+Value CHANNEL (\S+)
+Value SIGTYPE (\S+)
+Value ADMINSTATUS (\S+)
+Value OPER (\S+)
+Value INSTATUS (\S+)
+Value OUTSTATUS (\S+)
+Value EC (\S+)
+
+Start
+  ^.*PORT.+
+  ^.*\=+
+  ^\s*${PORT}\s+${CHANNEL}\s+${SIGTYPE}\s+${ADMINSTATUS}\s+${OPER}\s+${INSTATUS}\s+${OUTSTATUS}\s+${EC} -> Record
+

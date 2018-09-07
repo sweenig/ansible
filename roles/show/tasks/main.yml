@@ -1,0 +1,86 @@
+- name: Query generic device details
+  ios_command:
+    commands:
+      - show version
+      - dir
+      - show cdp neighbors
+      - show file systems
+      - show crypto key mypubkey rsa
+      - show running-config
+      - show ip interface brief
+  retries: 6
+  delay: 10
+  register: device_details
+  check_mode: no
+
+- name: Apply structure to raw generic data
+  set_fact:
+    version_data: "{{ device_details.stdout[0] | parse_cli_textfsm('fsm_templates/cisco_ios_show_version.template') }}"
+    dir_data: "{{ device_details.stdout[1] | parse_cli_textfsm('fsm_templates/cisco_ios_dir.template') }}"
+    cdp_neighbors: "{{ device_details.stdout[2] | parse_cli_textfsm('fsm_templates/cisco_ios_show_cdp_neighbors.template') }}"
+    file_systems: "{{ device_details.stdout[3] | parse_cli_textfsm('fsm_templates/cisco_ios_show_file_systems_flashonly.template') }}"
+    all_file_systems: "{{ device_details.stdout[3] | parse_cli_textfsm('fsm_templates/cisco_ios_show_file_systems.template') }}"
+    ip_int_br: "{{ device_details.stdout[6] | parse_cli_textfsm('fsm_templates/cisco_ios_show_ip_int_brief.template') }}"
+
+- name: Set additional common facts
+  set_fact:
+    show_data: "{{ device_details }}"
+    device_model: "{{ version_data[0].HARDWARE[0] }}"
+    device_free_space: "{{ dir_data[0].TOTAL_FREE }}"
+    device_version: "{{ version_data[0].VERSION }}"
+    membercount: "{{ version_data[0].HARDWARE | length }}"
+    file_list: "{{ dir_data | map(attribute='NAME') | list }}"
+    system_image: "{{ version_data[0].RUNNING_IMAGE }}"
+    hostname: "{{ version_data[0].HOSTNAME }}"
+    mode: BUNDLE
+    install_supported: "{{ version_data[0].MODE[0] is string }}"
+    config_register: "{{ version_data[0].CONFIG_REGISTER }}"
+
+- name: Retrieve model specific information from inventory
+  set_fact:
+    model_vars: "{{ targetversion[ansible_network_os][model_families[ansible_network_os][device_model]] }}"
+
+- name: Query interface status information
+  ios_command:
+    commands:
+      - show interfaces status
+  register: int_status_details
+  check_mode: no
+  when: model_vars.is_vg == false
+- name: Apply structure to raw interface status data
+  set_fact:
+    sh_int_stat: "{{ int_status_details.stdout[0] | parse_cli_textfsm('fsm_templates/cisco_ios_show_interfaces_status.template') }}"
+  when: model_vars.is_vg == false
+
+- name: Query Voice Gateway details
+  ios_command:
+    commands:
+      - show voice port summary
+  register: voice_details
+  check_mode: no
+  when: model_vars.is_vg == true
+- name: Apply structure to raw Voice Gateway data
+  set_fact:
+    voice_ports: "{{ voice_details.stdout[0] | parse_cli_textfsm('fsm_templates/cisco_ios_show_voice_port_summary.template') }}"
+  when: model_vars.is_vg == true
+
+- name: Extract mode ( Install | Bundle ) from supported devices
+  set_fact: 
+    mode: "{{ version_data[0].MODE[0] }}"
+  when: install_supported
+
+- name: Display key values
+  debug:
+    msg:
+      - "Device model: {{ device_model }}"
+      - "Device version: {{ device_version }}"
+      - "System Image: {{ system_image }}"
+      - "model_vars: {{ model_vars }}"
+  when: show_output == true
+
+- name: Record Device Details
+  copy:
+    content="{{ device_details.stdout_lines }}"
+    dest="outputfiles/{{ hostname }}.{{ file_prefix }}.py"
+  when: file_output == true
+

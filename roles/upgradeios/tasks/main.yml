@@ -1,0 +1,16 @@
+- name: Add new boot directive (switch bundle method)
+  ios_config:
+    lines:
+      - no boot system switch all
+      - boot system switch all "flash:/{{ model_vars.img }}"
+  when: model_vars.boot_method == "switch"
+
+- name: Add new boot directive (router bundle method)
+  ios_config:
+    lines:
+      - no boot system
+      - boot system "flash:{{ model_vars.img }}"
+  when: model_vars.boot_method != "switch"
+
+- name: Save configuration and reboot
+  import_role: name=save_reboot_verify

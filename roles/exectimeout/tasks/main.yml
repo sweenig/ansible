@@ -1,0 +1,8 @@
+- name: Extend session timeout
+  ios_config:
+    lines:
+      - exec-timeout 60 0
+    parents: "{{ item }}"
+  with_items:
+    - line vty 0 4
+    - line vty 5 15

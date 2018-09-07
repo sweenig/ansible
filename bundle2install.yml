@@ -1,0 +1,17 @@
+- hosts: all
+  gather_facts: no
+  connection: network_cli
+  tasks:
+    - import_role: name=show
+      vars:
+        show_output: False
+        file_output: False
+        file_prefix: precrqdetails
+      tags: show
+      failed_when: versionmap[device_model] is not defined
+
+    - name: Convert compatible devices from bundle mode to install mode
+      debug: msg="This device should be converted (Multimode supported {{ install_supported }} Current mode {{ mode }})"
+      # import_role: name=bundle2install
+      when: (install_supported) and (mode == 'BUNDLE')
+      tags: bundle2install

@@ -1,0 +1,54 @@
+- name: "Query device for directory listing"
+  ios_command:
+    commands:
+      - "dir {{ volume }}"
+  register: dir_data_raw
+
+- name: "Apply structure to raw data"
+  set_fact:
+    dir_data: "{{ dir_data_raw.stdout[0] | parse_cli_textfsm('fsm_templates/cisco_ios_dir.template') }}"
+
+- name: "Extract file list from structured data"
+  set_fact:
+    volume_file_list: "{{ dir_data | map(attribute='NAME') | list }}"
+    device_free_space: "{{ dir_data[0].TOTAL_FREE }}"
+
+- block:
+  - name: "Check for available free space"
+    assert:
+      that: "device_free_space|int >= model_vars.size|int"
+      msg: "Image requires {{ model_vars.size }} but {{ volume }} only has {{ device_free_space }} available"
+
+  - name: Disable file prompts
+    ios_config:
+      lines:
+        - file prompt quiet
+
+  - name: "Stage file via http/tftp"
+    ios_command:
+      commands:
+        - command: "copy {{ iospathprefix }}{{ model_vars.img }} {{ volume }}"
+          prompt: filename
+          answer: "{{ model_vars.img }}"
+      wait_for:
+        - result[0] contains copied
+
+  - name: Enable file prompts
+    ios_config:
+     lines:
+       - file prompt alert
+
+  when: model_vars.img not in volume_file_list
+
+- name: "Calculate the Checksum"
+  ios_command:
+    commands:
+      - verify /md5 {{ volume }}{{ model_vars.img }}
+    wait_for:
+      - result[0] contains Done
+  register: remote_checksum
+
+- name: "Compare checksum with known checksum"
+  set_fact:
+    device_image_checksum: "{{ remote_checksum.stdout[0]|regex_search(' ([A-z0-9]+)$','\\1') }}"
+  failed_when: device_image_checksum[0] != model_vars.checksum

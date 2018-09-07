@@ -1,0 +1,11 @@
+- hosts: all
+  gather_facts: no
+  connection: network_cli
+  tasks:
+    - name: activate bin image
+      ios_config:
+        lines:
+          - no boot system switch all
+          - "boot system switch all flash:/cat3k_caa-universalk9.16.03.05b.SPA.bin"
+
+    - import_role: name=save_reboot_verify

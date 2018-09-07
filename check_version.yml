@@ -1,0 +1,17 @@
+- hosts: all
+  gather_facts: no
+  connection: network_cli
+  tasks:
+    - import_role: name=show
+      failed_when: versionmap[device_model] is not defined
+
+    - name: Check if on target version
+      assert:
+        that: versionmap[device_model].version == device_version
+        msg: "{{ hostname }} ({{ device_model }}) -- {{ device_version }} ==> {{ versionmap[device_model].version }}"
+
+    - name: If multimode is supported, check if running in install mode
+      debug:
+        msg: "Multimode supported ({{ install_supported }}), running in {{ mode }} mode"
+      # failed_when: (install_supported) and (mode == 'BUNDLE')
+      when: install_supported

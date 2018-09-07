@@ -1,0 +1,19 @@
+- name: Save configuration
+  ios_command:
+    commands:
+      - command: write memory
+        prompt: confirm
+        answer: y
+
+- name: Set configuration register
+  ios_config:
+    lines:
+      - "config-register {{ model_vars.config_register | string }}"
+  when: config_register != model_vars.config_register
+
+- name: Reboot
+  ios_command:
+    commands:
+      - command: "reload\ny\ny"
+        prompt: Proceed with reload?
+        answer: y
